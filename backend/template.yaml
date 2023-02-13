@@ -1,0 +1,182 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  sam-app
+
+  Sample SAM Template for sam-app
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Parameters:
+  DBInstanceIdentifier:
+    Type: String
+    Default: 'aws-tests'
+
+Globals:
+  Function:
+    Timeout: 200
+    Runtime: nodejs18.x
+  Api:
+    Cors:
+      AllowMethods: "'OPTIONS,POST,GET,DELETE,PATCH,PUT,HEAD'"
+      AllowHeaders: "'*'"
+      AllowOrigin: "'*'"
+
+Resources:
+  CognitoEmailConfiguration:
+    Type: AWS::Cognito::UserPool EmailConfiguration
+    Properties:
+      EmailSendingAccount: no-reply@verificationemail.com
+      From: Adham Haddad
+      ReplyToEmailAddress: adhamhaddad.dev@gmail.com
+
+  CognitoMessageTemplate:
+    Type: AWS::Cognito::UserPool InviteMessageTemplate
+    Properties:
+      EmailMessage: Welcome Friend
+      EmailSubject: Signed up succeed
+
+  CognitoUserPoolPasswordPolicy:
+    Type: AWS::Cognito::UserPool PasswordPolicy
+    Properties:
+      MinimumLenght: 8
+      RequireLowercase: true
+      RequireNumbers: true
+      RequireSymbols: true
+      RequireUppercase: true
+
+  CognitoUserPoolPolicies:
+    Type: AWS::Cognito::UserPool Policies
+    Properties:
+      PasswordPolicy: !Ref CognitoUserPoolPasswordPolicy
+
+  Cognito:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      AdminCreateUserConfig:
+        - AllowAdminCreateUserOnly: true
+        - InviteMessageTemplate: !Ref CognitoMessageTemplate
+        - UnusedAccountValidityDays: 2
+      AliasAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+      EmailConfiguration: !Ref CognitoEmailConfiguration
+      LambdaConfig: LambdaConfig
+      Policies: !Ref CognitoUserPoolPolicies
+      UsernameAttributes:
+        - email
+      UsernameConfiguration: true
+      UserPoolName: Admin
+
+  DependenciesLayers:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: dependencies
+      Description: Dependencies for project.
+      ContentUri: dependencies/
+      CompatibleRuntimes:
+        - nodejs18.x
+      LicenseInfo: MIT
+      RetentionPolicy: Retain
+
+  GetProductFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: products/
+      Handler: getProd.getProduct
+      Runtime: nodejs18.x
+      Tracing: Active
+      Layers:
+        - !Ref DependenciesLayers
+      Architectures:
+        - x86_64
+      Events:
+        GetProduct:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /product
+            Method: get
+
+  CreateProductFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: products/
+      Handler: createProd.createProduct
+      Runtime: nodejs18.x
+      Tracing: Active
+      Layers:
+        - !Ref DependenciesLayers
+      Architectures:
+        - x86_64
+      Events:
+        CreateProduct:
+          Type: Api
+          Properties:
+            Path: /product
+            Method: post
+
+  UpdateProductFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: products/
+      Handler: updateProd.updateProduct
+      Runtime: nodejs18.x
+      Tracing: Active
+      Layers:
+        - !Ref DependenciesLayers
+      Architectures:
+        - x86_64
+      Events:
+        UpdateProduct:
+          Type: Api
+          Properties:
+            Path: /product
+            Method: patch
+
+  DeleteProductFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: products/
+      Handler: deleteProd.deleteProduct
+      Runtime: nodejs18.x
+      Tracing: Active
+      Layers:
+        - !Ref DependenciesLayers
+      Architectures:
+        - x86_64
+      Events:
+        DeleteProduct:
+          Type: Api
+          Properties:
+            Path: /product
+            Method: delete
+
+  CreateOrderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: Order/
+      Handler: createOrder.createOrder
+      Runtime: nodejs18.x
+      Tracing: Active
+      Layers:
+        - !Ref DependenciesLayers
+      Architectures:
+        - x86_64
+      Events:
+        CreateOrder:
+          Type: Api
+          Properties:
+            Path: /create-order
+            Method: post
+
+  pgDB:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBName: 'aws_tests'
+      DBInstanceIdentifier: !Ref DBInstanceIdentifier
+      AllocatedStorage: 5
+      DBInstanceClass: db.t3.micro
+      Engine: postgres
+      MasterUsername: 'postgres'
+      MasterUserPassword: 'postgres'
+    DeletionPolicy: Snapshot
