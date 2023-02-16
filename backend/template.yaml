@@ -1,6 +1,19 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
+  backend
+
+  Sample SAM Template for backend
+  
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
   sam-app
 
   Sample SAM Template for sam-app
@@ -15,6 +28,9 @@ Globals:
   Function:
     Timeout: 200
     Runtime: nodejs18.x
+    Layers:
+      - !Ref NodeModulesLayer
+      - !Ref CommonLayer
   Api:
     Cors:
       AllowMethods: "'OPTIONS,POST,GET,DELETE,PATCH,PUT,HEAD'"
@@ -22,90 +38,48 @@ Globals:
       AllowOrigin: "'*'"
 
 Resources:
-  CognitoEmailConfiguration:
-    Type: AWS::Cognito::UserPool EmailConfiguration
-    Properties:
-      EmailSendingAccount: no-reply@verificationemail.com
-      From: Adham Haddad
-      ReplyToEmailAddress: adhamhaddad.dev@gmail.com
-
-  CognitoMessageTemplate:
-    Type: AWS::Cognito::UserPool InviteMessageTemplate
-    Properties:
-      EmailMessage: Welcome Friend
-      EmailSubject: Signed up succeed
-
-  CognitoUserPoolPasswordPolicy:
-    Type: AWS::Cognito::UserPool PasswordPolicy
-    Properties:
-      MinimumLenght: 8
-      RequireLowercase: true
-      RequireNumbers: true
-      RequireSymbols: true
-      RequireUppercase: true
-
-  CognitoUserPoolPolicies:
-    Type: AWS::Cognito::UserPool Policies
-    Properties:
-      PasswordPolicy: !Ref CognitoUserPoolPasswordPolicy
-
-  Cognito:
-    Type: AWS::Cognito::UserPool
-    Properties:
-      AdminCreateUserConfig:
-        - AllowAdminCreateUserOnly: true
-        - InviteMessageTemplate: !Ref CognitoMessageTemplate
-        - UnusedAccountValidityDays: 2
-      AliasAttributes:
-        - email
-      AutoVerifiedAttributes:
-        - email
-      EmailConfiguration: !Ref CognitoEmailConfiguration
-      LambdaConfig: LambdaConfig
-      Policies: !Ref CognitoUserPoolPolicies
-      UsernameAttributes:
-        - email
-      UsernameConfiguration: true
-      UserPoolName: Admin
-
-  DependenciesLayers:
+  NodeModuleLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      LayerName: dependencies
-      Description: Dependencies for project.
-      ContentUri: dependencies/
+      LayerName: node-modules
+      Description: Dependencies layer for project.
+      ContentUri: node-modules-layer/
       CompatibleRuntimes:
         - nodejs18.x
       LicenseInfo: MIT
       RetentionPolicy: Retain
 
-  GetProductFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  HelpersDependeciesLayers:
+    Type: AWS::Serverless::LayerVersion
     Properties:
-      CodeUri: products/
-      Handler: getProd.getProduct
-      Runtime: nodejs18.x
-      Tracing: Active
-      Layers:
-        - !Ref DependenciesLayers
-      Architectures:
-        - x86_64
-      Events:
-        GetProduct:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
-          Properties:
-            Path: /product
-            Method: get
+      LayerName: helpers
+      Description: Helper layers for project
+      ContentUri: helper-layers/
+      CompatibleRuntimes:
+        - nodejs18.x
+      LicenseInfo: MIT
+      RetentionPolicy: Retain
+
+  CommonLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: common
+      Description: Common layers for project
+      ContentUri: common-layer/
+      CompatibleRuntimes:
+        - nodejs18.x
+      LicenseInfo: MIT
+      RetentionPolicy: Retain
 
   CreateProductFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: products/
-      Handler: createProd.createProduct
+      CodeUri: dist/ProductsTenant/
+      Handler: createProduct.createProduct
       Runtime: nodejs18.x
       Tracing: Active
       Layers:
-        - !Ref DependenciesLayers
+        - !Ref CommonLayer
       Architectures:
         - x86_64
       Events:
@@ -115,15 +89,51 @@ Resources:
             Path: /product
             Method: post
 
-  UpdateProductFunction:
+  GetProductsFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: products/
-      Handler: updateProd.updateProduct
+      CodeUri: ProductsTenant/
+      Handler: getProducts.getProducts
       Runtime: nodejs18.x
       Tracing: Active
       Layers:
-        - !Ref DependenciesLayers
+        - !Ref CommonLayer
+      Architectures:
+        - x86_64
+      Events:
+        GetProduct:
+          Type: Api
+          Properties:
+            Path: /products
+            Method: get
+
+  GetProductFunction:
+    Type: AWS::Serverless::function
+    Properties:
+      CodeUri: ProductsTenant/
+      Handler: getProduct.getProduct
+      Runtime: nodejs18.x
+      Tracing: Active
+      Layers:
+        - !Ref CommonLayer
+      Architectures:
+        - x86_64
+      Events:
+        GetProduct:
+          Type: Api
+          Properties:
+            Path: /product
+            Method: get
+
+  UpdateProductFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ProductsTenant/
+      Handler: updateProduct.updateProduct
+      Runtime: nodejs18.x
+      Tracing: Active
+      Layers:
+        - !Ref CommonLayer
       Architectures:
         - x86_64
       Events:
@@ -136,12 +146,12 @@ Resources:
   DeleteProductFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: products/
-      Handler: deleteProd.deleteProduct
+      CodeUri: ProductsTenant/
+      Handler: deleteProduct.deleteProduct
       Runtime: nodejs18.x
       Tracing: Active
       Layers:
-        - !Ref DependenciesLayers
+        - !Ref CommonLayer
       Architectures:
         - x86_64
       Events:
@@ -150,24 +160,6 @@ Resources:
           Properties:
             Path: /product
             Method: delete
-
-  CreateOrderFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: Order/
-      Handler: createOrder.createOrder
-      Runtime: nodejs18.x
-      Tracing: Active
-      Layers:
-        - !Ref DependenciesLayers
-      Architectures:
-        - x86_64
-      Events:
-        CreateOrder:
-          Type: Api
-          Properties:
-            Path: /create-order
-            Method: post
 
   pgDB:
     Type: AWS::RDS::DBInstance
@@ -180,3 +172,57 @@ Resources:
       MasterUsername: 'postgres'
       MasterUserPassword: 'postgres'
     DeletionPolicy: Snapshot
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  CreateProductFunction:
+    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/prod/hello"
+  CreateProductFunction:
+    Description: "Hello World Lambda Function ARN"
+    Value: !GetAtt CreateProductFunction.Arn
+  CreateProductFunctionIamRole:
+    Description: "Implicit IAM Role created for Create Product function"
+    Value: !GetAtt CreateProductFunctionRole.Arn
+
+  GetProductFunction:
+    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/"
+  GetProductFunction:
+    Description: "Hello World Lambda Function ARN"
+    Value: !GetAtt GetProductFunction.Arn
+  GetProductFunctionIamRole:
+    Description: "Implicit IAM Role created for Create Product function"
+    Value: !GetAtt GetProductFunctionRole.Arn
+
+  GetProductsFunction:
+    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/"
+  GetProductsFunction:
+    Description: "Hello World Lambda Function ARN"
+    Value: !GetAtt GetProductsFunction.Arn
+  GetProductsFunctionIamRole:
+    Description: "Implicit IAM Role created for Create Product function"
+    Value: !GetAtt GetProductsFunctionRole.Arn
+
+  UpdateProductFunction:
+    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/"
+  UpdateProductFunction:
+    Description: "Hello World Lambda Function ARN"
+    Value: !GetAtt UpdateProductFunction.Arn
+  UpdateProductFunctionIamRole:
+    Description: "Implicit IAM Role created for Create Product function"
+    Value: !GetAtt UpdateProductFunctionRole.Arn
+
+  DeleteProductFunction:
+    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/delete-api/user/product"
+  DeleteProductFunction:
+    Description: "Hello World Lambda Function ARN"
+    Value: !GetAtt DeleteProductFunction.Arn
+  DeleteProductFunctionIamRole:
+    Description: "Implicit IAM Role created for Create Product function"
+    Value: !GetAtt DeleteProductFunctionRole.Arn

@@ -1,0 +1,15 @@
+{
+  "dependencies": {
+    "aws-lambda": "^1.0.7",
+    "pg": "^8.9.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.110",
+    "@types/pg": "^8.6.6"
+  },
+  "scripts": {
+    "build": "tsc **/*.ts",
+    "start": "",
+    "deploy": "sam deploy"
+  }
+}

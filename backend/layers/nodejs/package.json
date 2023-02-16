@@ -1,0 +1,6 @@
+{
+    "dependencies": {
+        "aws-lambda": "^1.0.7",
+        "pg": "^8.9.0"
+    }
+}

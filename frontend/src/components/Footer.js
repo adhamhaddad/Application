@@ -1,10 +1,10 @@
 import React from 'react';
-import classes from '../css/Footer.module.css';
+import classes from '../assets/css/Footer.module.css';
 
 const Footer = () => {
   return (
     <footer className={classes['footer']}>
-      Copyrights &copy; 2023 Adham Ashraf
+      <p>Copyright AWS &copy; 2023 - Powered by Adham Haddad</p>
     </footer>
   );
 };

@@ -1,0 +1,33 @@
+.header {
+    display: flex;
+    justify-content: space-between;
+    padding: 0px 25px;
+}
+
+.header .logo {
+    width: 150px;
+}
+
+.header .navbar {
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.header .navbar>ul {
+    display: flex;
+    justify-items: center;
+}
+
+.header .navbar>ul li {
+    height: 100%;
+}
+
+.header .navbar>ul li a {
+    display: block;
+    height: 100%;
+    line-height: 50px;
+    text-align: center;
+    padding: 0px 10px;
+}
