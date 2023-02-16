@@ -10,6 +10,7 @@
   "scripts": {
     "build": "tsc **/*.ts",
     "start": "",
-    "deploy": "sam deploy"
+    "deploy": "rm -r node_modules && sam deploy",
+    "push": "rm -r node_modules && git add . && git commit -m \"new changes\" && git push "
   }
 }
