@@ -1,16 +1,20 @@
 {
-  "dependencies": {
-    "aws-lambda": "^1.0.7",
-    "pg": "^8.9.0"
-  },
-  "devDependencies": {
-    "@types/aws-lambda": "^8.10.110",
-    "@types/pg": "^8.6.6"
-  },
-  "scripts": {
-    "build": "tsc **/*.ts",
-    "start": "",
-    "deploy": "rm -r node_modules && sam deploy",
-    "push": "rm -r node_modules && git add . && git commit -m \"new changes\" && git push "
-  }
+    "dependencies": {
+        "aws-lambda": "^1.0.7",
+        "bcrypt": "^5.1.0",
+        "knex": "^2.4.2",
+        "pg": "^8.9.0"
+    },
+    "devDependencies": {
+        "@types/aws-lambda": "^8.10.110",
+        "@types/bcrypt": "^5.0.0",
+        "@types/knex": "^0.16.1",
+        "@types/pg": "^8.6.6"
+    },
+    "scripts": {
+        "build": "tsc **/*.ts",
+        "andrew": "cd helper-layers/nodejs && mkdir -p node_modules && cp -r common node_modules",
+        "start": "mkdir -p ./helper-layers/nodejs/node_modules && cp -r ./helper-layers/common ./helper-layers/nodejs/node_modules",
+        "deploy": "sam deploy"
+    }
 }

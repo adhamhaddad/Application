@@ -1,19 +1,19 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-// import { pgDatabase } from 'database';
-import hello from '/opt/nodejs/hello';
+import database from '/opt/nodejs/services/database';
 
 export const getProducts = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     let response: APIGatewayProxyResult;
     try {
-        // const connection = await pgDatabase.connect();
-        // const sql = 'SELECT * FROM products';
-        // const result = await connection.query(sql);
-        // connection.release();
+        const connection = await database.connect();
+        const sql = 'SELECT * FROM products';
+        const result = await connection.query(sql);
+        connection.release();
+
         response = {
             statusCode: 200,
             body: JSON.stringify({
                 status: true,
-                data: hello(),
+                data: result.rows,
                 message: 'Products fetched successfully',
             }),
         };

@@ -29,8 +29,9 @@ Globals:
     Timeout: 200
     Runtime: nodejs18.x
     Layers:
-      - !Ref NodeModulesLayer
+      - !Ref NodeModuleLayers
       - !Ref CommonLayer
+
   Api:
     Cors:
       AllowMethods: "'OPTIONS,POST,GET,DELETE,PATCH,PUT,HEAD'"
@@ -38,23 +39,12 @@ Globals:
       AllowOrigin: "'*'"
 
 Resources:
-  NodeModuleLayer:
+  NodeModuleLayers:
     Type: AWS::Serverless::LayerVersion
     Properties:
       LayerName: node-modules
-      Description: Dependencies layer for project.
+      Description: node-module for project
       ContentUri: node-modules-layer/
-      CompatibleRuntimes:
-        - nodejs18.x
-      LicenseInfo: MIT
-      RetentionPolicy: Retain
-
-  HelpersDependeciesLayers:
-    Type: AWS::Serverless::LayerVersion
-    Properties:
-      LayerName: helpers
-      Description: Helper layers for project
-      ContentUri: helper-layers/
       CompatibleRuntimes:
         - nodejs18.x
       LicenseInfo: MIT
@@ -64,12 +54,45 @@ Resources:
     Type: AWS::Serverless::LayerVersion
     Properties:
       LayerName: common
-      Description: Common layers for project
+      Description: common layers for project
       ContentUri: common-layer/
       CompatibleRuntimes:
         - nodejs18.x
       LicenseInfo: MIT
       RetentionPolicy: Retain
+
+  CreateUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: dist/UserRegisteration/
+      Handler: createUser.createUser
+      Runtime: nodejs18.x
+      Tracing: Active
+      Architectures:
+        - x86_64
+      Events:
+        CreateUser:
+          Type: Api
+          Properties:
+            Path: /user
+            Method: post
+
+  GetUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: dist/UserRegisteration/
+      Handler: getUser.getUser
+      Runtime: nodejs18.x
+      Tracing: Active
+      Architectures:
+        - x86_64
+      Events:
+        CreateUser:
+          Type: Api
+          Properties:
+            Path: /user
+            Method: get
+
 
   CreateProductFunction:
     Type: AWS::Serverless::Function
@@ -78,8 +101,6 @@ Resources:
       Handler: createProduct.createProduct
       Runtime: nodejs18.x
       Tracing: Active
-      Layers:
-        - !Ref CommonLayer
       Architectures:
         - x86_64
       Events:
@@ -92,12 +113,10 @@ Resources:
   GetProductsFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ProductsTenant/
+      CodeUri: dist/ProductsTenant/
       Handler: getProducts.getProducts
       Runtime: nodejs18.x
       Tracing: Active
-      Layers:
-        - !Ref CommonLayer
       Architectures:
         - x86_64
       Events:
@@ -110,12 +129,10 @@ Resources:
   GetProductFunction:
     Type: AWS::Serverless::function
     Properties:
-      CodeUri: ProductsTenant/
+      CodeUri: dist/ProductsTenant/
       Handler: getProduct.getProduct
       Runtime: nodejs18.x
       Tracing: Active
-      Layers:
-        - !Ref CommonLayer
       Architectures:
         - x86_64
       Events:
@@ -128,12 +145,10 @@ Resources:
   UpdateProductFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ProductsTenant/
+      CodeUri: dist/ProductsTenant/
       Handler: updateProduct.updateProduct
       Runtime: nodejs18.x
       Tracing: Active
-      Layers:
-        - !Ref CommonLayer
       Architectures:
         - x86_64
       Events:
@@ -146,12 +161,10 @@ Resources:
   DeleteProductFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ProductsTenant/
+      CodeUri: dist/ProductsTenant/
       Handler: deleteProduct.deleteProduct
       Runtime: nodejs18.x
       Tracing: Active
-      Layers:
-        - !Ref CommonLayer
       Architectures:
         - x86_64
       Events:
